@@ -3,22 +3,23 @@
 **Always see how much of your context window you've used.**
 
 ```
-~/code/my-project (main)
-[Opus 4.8] ▓▓▓░░░░░░░ 38%
+[Opus 4.8] ▓▓▓░░░░░░░ 33% 334k/1M                       ~/code/my-project (main)
 ```
+
+One line. Context on the left, where your eye already is. Directory and branch flushed
+right, out of the way.
 
 Claude Code doesn't show your context usage by default. It only warns you once you're
 already near the limit — and by then auto-compact is about to fire and you've lost the
 chance to `/handoff` cleanly or wrap up a phase on your own terms.
 
-This is a ~50-line status line that puts the number in front of you the whole time.
-
 ## What you get
 
-- **A bar and a percentage**, updated every turn.
+- **A bar, a percentage, and the raw token count** (`334k/1M`), updated every turn.
 - **Colour that warns you early.** Green under 70%, **amber at 70%**, **red at 85%** — so
   there's a band where you can still make a decision instead of being surprised.
-- **Directory and git branch**, because you were probably going to add those anyway.
+- **Directory and git branch**, right-aligned to the terminal edge. On a narrow terminal
+  the path is dropped rather than wrapped, so the line never eats two rows.
 - **No cost display** by default. Turn it on if you want it (see [Options](#options)).
 
 ## Install
@@ -96,6 +97,10 @@ renders whatever it prints. The useful part looks like this:
 `used_percentage` is **pre-calculated** — which is the whole reason this script is short.
 Earlier approaches had to find the session transcript on disk and sum token counts out of
 the JSONL by hand. That's no longer necessary.
+
+Terminal width is **not** in the JSON, but Claude Code exports **`$COLUMNS`** to the
+script's environment, which is what the right-alignment uses. (`/dev/tty` is *not*
+available, so `tput cols </dev/tty` and `stty size` both fail — don't reach for those.)
 
 ## Uninstall
 
