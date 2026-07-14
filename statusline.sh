@@ -2,11 +2,11 @@
 #
 # A Claude Code status line that always shows how much of your context window you've used.
 #
-#   [Opus 4.8] ▓▓▓░░░░░░░ 38%                              ~/code/my-project (main)
+#   [Opus 4.8] ▓▓▓░░░░░░░ 33% 334k/1M  ·  ~/code/my-project (main)
 #
 # Claude Code pipes a JSON blob to this script on stdin before each turn, and renders
 # whatever it prints. The context numbers come pre-calculated in `.context_window` —
-# no transcript parsing needed. Terminal width arrives as $COLUMNS.
+# no transcript parsing needed.
 #
 # Docs: https://docs.claude.com/en/docs/claude-code/statusline
 
@@ -69,31 +69,18 @@ if [ "$MAX" -gt 0 ]; then
 fi
 
 LEFT="${DIM}[${MODEL}]${RESET} ${C}${BAR}${RESET} ${PCT}%${TOKENS:+ ${DIM}${TOKENS}${RESET}}"
-# Measured, not derived from the string, so multi-byte bar glyphs can't skew it.
-LEFT_LEN=$(( ${#MODEL} + 2 + 1 + WIDTH + 1 + ${#PCT} + 1 ))
-[ -n "$TOKENS" ] && LEFT_LEN=$(( LEFT_LEN + 1 + ${#TOKENS} ))
 
 COST_STR=""
 if [ "$SHOW_COST" = "1" ]; then
   COST=$(jq -r '.cost.total_cost_usd // 0' <<<"$input")
   COST_STR=$(printf '$%.2f' "$COST")
   LEFT+="  ${DIM}${COST_STR}${RESET}"
-  LEFT_LEN=$(( LEFT_LEN + 2 + ${#COST_STR} ))
 fi
 
-# --- right: directory and branch, flushed to the right edge --------------------
+# --- then: directory and branch -----------------------------------------------
+# Deliberately NOT right-aligned. Claude Code clips the status line before the real
+# terminal edge, so padding out to $COLUMNS gets the tail truncated ("…/personal (m…").
+# Keeping everything left-packed means nothing is ever cut.
 RIGHT_PLAIN="${SHORT_DIR}${BRANCH:+ (${BRANCH})}"
-RIGHT="${DIM}${RIGHT_PLAIN}${RESET}"
 
-# Claude Code exports COLUMNS; tput is the fallback, then a sane default.
-COLS=${COLUMNS:-$(tput cols 2>/dev/null || echo 80)}
-[[ "$COLS" =~ ^[0-9]+$ ]] || COLS=80
-
-GAP=$(( COLS - LEFT_LEN - ${#RIGHT_PLAIN} - 1 ))
-
-if [ "$GAP" -ge 2 ]; then
-  printf '%s%*s%s' "$LEFT" "$GAP" "" "$RIGHT"
-else
-  # Too narrow to right-align — drop the path rather than wrap onto a second line.
-  printf '%s' "$LEFT"
-fi
+printf '%s%s' "$LEFT" "${RIGHT_PLAIN:+  ${DIM}·  ${RIGHT_PLAIN}${RESET}}"

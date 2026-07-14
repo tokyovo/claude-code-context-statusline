@@ -3,11 +3,11 @@
 **Always see how much of your context window you've used.**
 
 ```
-[Opus 4.8] ▓▓▓░░░░░░░ 33% 334k/1M                       ~/code/my-project (main)
+[Opus 4.8] ▓▓▓░░░░░░░ 33% 334k/1M  ·  ~/code/my-project (main)
 ```
 
-One line. Context on the left, where your eye already is. Directory and branch flushed
-right, out of the way.
+One line, left-packed. Context first — where your eye already is — then the directory and
+branch.
 
 Claude Code doesn't show your context usage by default. It only warns you once you're
 already near the limit — and by then auto-compact is about to fire and you've lost the
@@ -18,8 +18,8 @@ chance to `/handoff` cleanly or wrap up a phase on your own terms.
 - **A bar, a percentage, and the raw token count** (`334k/1M`), updated every turn.
 - **Colour that warns you early.** Green under 70%, **amber at 70%**, **red at 85%** — so
   there's a band where you can still make a decision instead of being surprised.
-- **Directory and git branch**, right-aligned to the terminal edge. On a narrow terminal
-  the path is dropped rather than wrapped, so the line never eats two rows.
+- **Directory and git branch**, packed in right after. Not right-aligned — see the note
+  below on why that doesn't work.
 - **No cost display** by default. Turn it on if you want it (see [Options](#options)).
 
 ## Install
@@ -98,9 +98,18 @@ renders whatever it prints. The useful part looks like this:
 Earlier approaches had to find the session transcript on disk and sum token counts out of
 the JSONL by hand. That's no longer necessary.
 
-Terminal width is **not** in the JSON, but Claude Code exports **`$COLUMNS`** to the
-script's environment, which is what the right-alignment uses. (`/dev/tty` is *not*
-available, so `tput cols </dev/tty` and `stty size` both fail — don't reach for those.)
+### Why not right-align the path?
+
+Tempting, and it *looks* like it should work: Claude Code exports **`$COLUMNS`** to the
+script's environment, so you can pad the line out to the terminal width. Don't — **Claude
+Code clips the status line before the real terminal edge**, so anything you push out to
+column `$COLUMNS` gets its tail truncated (`~/workspace/personal (m…`). Keep it left-packed
+and nothing is ever cut.
+
+Two other things worth knowing if you're writing your own: `/dev/tty` is **not** available
+to the status line process, so `tput cols </dev/tty` and `stty size` both fail. And the
+JSON carries more than the docs list — `effort`, `fast_mode`, `thinking`, `rate_limits`,
+`session_name`, `transcript_path` are all in there.
 
 ## Uninstall
 
